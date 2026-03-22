@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { useChat } from '@ai-sdk/react';
 import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -32,11 +31,42 @@ export default function NexoraApp() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState({ users: 0, chats: 0, revenue: "₹45,200" });
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit, setMessages, isLoading } = useChat({
-    api: '/api/chat',
-  });
+  const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    const userMessage = { role: 'user', content: input };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    setInput('');
+    setIsLoading(true);
+    setStatus('loading');
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updatedMessages }),
+      });
+
+      if (!res.ok) throw new Error('Chat request failed');
+
+      const aiText = await res.text();
+      const assistantMessage = { role: 'assistant', content: aiText };
+      setMessages(prev => [...prev, assistantMessage]);
+      setStatus('done');
+    } catch (err) {
+      console.error('Chat error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -146,10 +176,10 @@ export default function NexoraApp() {
                 </div>
               </div>
               
-              <form onSubmit={handleSubmit} className="p-6 lg:p-12 max-w-4xl mx-auto w-full sticky bottom-0 bg-gradient-to-t from-[#030305] to-transparent">
+              <form onSubmit={handleChatSubmit} className="p-6 lg:p-12 max-w-4xl mx-auto w-full sticky bottom-0 bg-gradient-to-t from-[#030305] to-transparent">
                 <div className="relative flex items-center bg-[#0D0D14] border border-white/10 p-2.5 rounded-[2.5rem] shadow-2xl focus-within:border-[#6C63FF]/50 transition-all group">
-                  <input value={input} onChange={handleInputChange} placeholder="Command Nexora..." className="flex-1 bg-transparent border-none outline-none px-6 text-white text-sm" />
-                  <button type="submit" disabled={isLoading || !input?.trim()} className="w-14 h-14 bg-[#6C63FF] rounded-3xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl disabled:opacity-50">
+                  <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Command Nexora..." className="flex-1 bg-transparent border-none outline-none px-6 text-white text-sm" />
+                  <button type="submit" disabled={isLoading || !input.trim()} className="w-14 h-14 bg-[#6C63FF] rounded-3xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl disabled:opacity-50">
                     <Send size={24} className="text-white" />
                   </button>
                 </div>

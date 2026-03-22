@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google';
-import { streamText, convertToCoreMessages } from 'ai';
+import { streamText } from 'ai';
 import fs from 'fs';
 import path from 'path';
 
@@ -8,23 +8,18 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  // 📂 READ THE MASTER MANUAL
+  // Read the manual for YashNav logic
   const docPath = path.join(process.cwd(), 'context', 'yashnav-docs.md');
-  const masterManual = fs.readFileSync(docPath, 'utf8');
+  const masterManual = fs.existsSync(docPath) ? fs.readFileSync(docPath, 'utf8') : "";
 
   const result = await streamText({
     model: google('gemini-1.5-pro'),
-    messages: convertToCoreMessages(messages),
+    messages: messages, // We pass messages directly to avoid the export error
     system: `
-      YOU ARE NEXORA AI. 
-      YOU HAVE ACCESS TO THE YASHNAV MASTER MANUAL:
-      ---
-      ${masterManual}
-      ---
-      INSTRUCTIONS:
-      - Use the technical stack and brand colors defined above for ALL code and design.
-      - If the user asks to "Build Load Maker," reference the logic in the manual.
-      - Execute Coding, Design, SEO, and Deployment strategies as the Lead Architect of YashNav.
+      YOU ARE NEXORA AI, THE ELITE EXECUTION ENGINE FOR YASHNAV IT SOLUTIONS.
+      MASTER MANUAL DATA: ${masterManual}
+      - Execute all coding, design, and SEO tasks based on YashNav standards.
+      - Output professional Markdown and production-ready code.
     `,
   });
 
