@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import LandingPage from './landing/page'; 
+import LandingPage from './landing/page'; // <-- Double check this path!
 import { 
   Send, Plus, MessageSquare, Cpu, Menu, ShieldCheck, 
   Users, IndianRupee, ArrowUpRight, LogOut

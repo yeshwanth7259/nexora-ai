@@ -10,11 +10,11 @@ export async function POST(req: Request) {
 
   // Read the manual for YashNav logic
   const docPath = path.join(process.cwd(), 'context', 'yashnav-docs.md');
-  const masterManual = fs.existsSync(docPath) ? fs.readFileSync(docPath, 'utf8') : "";
+  const masterManual = fs.existsSync(docPath) ? fs.readFileSync(docPath, 'utf8') : "Lead Architect for YashNav IT Solutions.";
 
   const result = await streamText({
     model: google('gemini-1.5-pro'),
-    messages: messages, // We pass messages directly to avoid the export error
+    messages: messages, // Pass directly to avoid naming errors
     system: `
       YOU ARE NEXORA AI, THE ELITE EXECUTION ENGINE FOR YASHNAV IT SOLUTIONS.
       MASTER MANUAL DATA: ${masterManual}
