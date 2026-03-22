@@ -1,170 +1,135 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import { useChat } from '@ai-sdk/react';
-import { supabase } from '@/lib/supabase';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import React from 'react';
+import Link from 'next/link';
 import { 
-  Send, Plus, MessageSquare, Cpu, Menu, Rocket, 
-  Binary, Zap, ChevronRight, ShieldCheck, Users, IndianRupee, ArrowUpRight, Calendar
+  Rocket, Code, Paintbrush, Globe, Zap, ShieldCheck, 
+  ArrowRight, Cpu, Sparkles, BarChart3 
 } from "lucide-react";
 
-// --- SUB-COMPONENTS ---
-const StatCard = ({ icon, label, value, change, color = "text-[#6C63FF]" }: any) => (
-  <div className="bg-[#0A0A0F] border border-white/5 p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden group hover:border-[#6C63FF]/30 transition-all">
-    <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#6C63FF] blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-    <div className="flex justify-between items-start mb-6">
-      <div className={`p-4 bg-white/5 rounded-2xl ${color} border border-white/5`}>{icon}</div>
-      <div className="flex items-center gap-1 text-green-500 text-xs font-black italic">
-        <ArrowUpRight size={14} /> {change}
-      </div>
-    </div>
-    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{label}</p>
-    <h2 className="text-3xl font-black italic tracking-tighter text-white uppercase leading-none">{value}</h2>
-  </div>
-);
-
-export default function NexoraApp() {
-  const [currentView, setCurrentView] = useState<'chat' | 'admin'>('chat');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [stats, setStats] = useState({ users: 0, chats: 0, revenue: "₹45,200" });
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const { messages, input, handleInputChange, handleSubmit, setMessages, setInput, isLoading } = useChat({
-    api: '/api/chat',
-  });
-
-  useEffect(() => {
-    const checkRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        if (profile?.role === 'admin') setIsAdmin(true);
-      }
-    };
-    const fetchStats = async () => {
-      const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-      const { count: chatCount } = await supabase.from('chats').select('*', { count: 'exact', head: true });
-      setStats(prev => ({ ...prev, users: userCount || 0, chats: chatCount || 0 }));
-    };
-    checkRole();
-    fetchStats();
-  }, []);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages]);
-
+export default function LandingPage() {
   return (
-    <div className="flex h-screen w-full bg-[#030305] text-slate-200 overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#030305] text-slate-200 font-sans selection:bg-[#6C63FF]/30">
       
-      {/* SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0A0A0F] border-r border-white/5 transform transition-transform lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex flex-col h-full p-6">
-          <div className="flex items-center gap-3 mb-10 px-2">
-            <Cpu className="text-[#6C63FF]" size={24} />
-            <h1 className="text-xl font-black italic uppercase tracking-tighter text-white">NEXORA AI</h1>
+      {/* 1. NAV BAR */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#030305]/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Cpu className="text-[#6C63FF]" size={28} />
+            <span className="text-xl font-black italic tracking-tighter text-white">NEXORA AI</span>
           </div>
-
-          <nav className="flex-1 space-y-2">
-            <button onClick={() => { setMessages([]); setCurrentView('chat'); }} className="w-full bg-[#6C63FF] text-white py-3 rounded-2xl font-bold mb-8 flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-[#6C63FF]/20">
-              <Plus size={18} /> New Session
-            </button>
-            
-            <button onClick={() => setCurrentView('chat')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest italic ${currentView === 'chat' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white'}`}>
-              <MessageSquare size={16}/> Intelligence Chat
-            </button>
-
-            {isAdmin && (
-              <button onClick={() => setCurrentView('admin')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest italic ${currentView === 'admin' ? 'bg-[#6C63FF] text-white' : 'text-slate-500 hover:text-white'}`}>
-                <ShieldCheck size={16} className={currentView === 'admin' ? 'text-white' : 'text-amber-500'}/> Admin Console
-              </button>
-            )}
-          </nav>
+          <div className="hidden md:flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            <a href="#features" className="hover:text-white transition-colors">Capabilities</a>
+            <a href="#solutions" className="hover:text-white transition-colors">YashNav Suites</a>
+            <Link href="/login" className="bg-[#6C63FF] text-white px-6 py-2.5 rounded-xl hover:scale-105 transition-all shadow-lg shadow-[#6C63FF]/20">
+              Launch Console
+            </Link>
+          </div>
         </div>
-      </aside>
+      </nav>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col relative bg-[#030305]">
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#030305]/60 backdrop-blur-md">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden text-slate-400"><Menu /></button>
-          <span className="text-[10px] font-black text-slate-500 tracking-widest uppercase italic">YashNav Production Node Live</span>
-        </header>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {currentView === 'admin' ? (
-            <div className="p-8 lg:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <header className="flex justify-between items-end mb-12 px-4">
-                <div>
-                  <p className="text-[#6C63FF] text-[10px] font-black uppercase tracking-[0.4em] mb-2">Nexora Intelligence // Analytics</p>
-                  <h1 className="text-4xl lg:text-5xl font-black italic tracking-tighter text-white uppercase">Project Overview</h1>
-                </div>
-                <div className="hidden lg:flex bg-white/5 border border-white/10 px-4 py-2 rounded-xl items-center gap-2 text-[10px] font-black text-slate-400">
-                   <Calendar size={14} /> MARCH 2026
-                </div>
-              </header>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
-                <StatCard icon={<Users />} label="Total Users" value={stats.users} change="+12%" />
-                <StatCard icon={<MessageSquare />} label="Active Sessions" value={stats.chats} change="+24%" />
-                <StatCard icon={<IndianRupee />} label="Revenue" value={stats.revenue} change="+8%" color="text-green-500" />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col h-full">
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 lg:p-12">
-                <div className="max-w-4xl mx-auto">
-                  {messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center py-20 text-center">
-                      <h2 className="text-sm lg:text-base font-black text-white tracking-[0.6em] mt-20 uppercase italic opacity-50">
-                        Nexora Intelligence // Build the Future.
-                      </h2>
-                    </div>
-                  ) : (
-                    messages.map((m: any, i: number) => (
-                      <div key={i} className={`flex gap-6 mb-12 text-left animate-in slide-in-from-bottom-4 ${m.role === 'assistant' ? 'bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5' : 'px-4'}`}>
-                        <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center font-black text-[10px] ${m.role === 'assistant' ? 'bg-[#6C63FF] text-white shadow-lg' : 'bg-slate-800 text-slate-400'}`}>
-                          {m.role === 'assistant' ? 'NX' : 'Y'}
-                        </div>
-                        <div className="prose prose-invert max-w-none text-slate-200 flex-1">
-                          <ReactMarkdown components={{
-                            code({inline, className, children}: any) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return !inline && match ? (
-                                <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" customStyle={{borderRadius: '1rem', background: '#0D0D12'}}>{String(children)}</SyntaxHighlighter>
-                              ) : <code className="bg-slate-800 px-1 rounded text-[#6C63FF]">{children}</code>
-                            }
-                          }}>{m.content}</ReactMarkdown>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-              <form onSubmit={handleSubmit} className="p-6 lg:p-12 max-w-4xl mx-auto w-full sticky bottom-0 bg-gradient-to-t from-[#030305] via-[#030305] to-transparent">
-                <div className="relative flex items-center bg-[#0D0D14] border border-white/10 p-2.5 rounded-[2.5rem] shadow-2xl group focus-within:border-[#6C63FF]/50 transition-all">
-                  <input 
-                    value={input} 
-                    onChange={handleInputChange} 
-                    placeholder="Brief your business requirements..." 
-                    className="flex-1 bg-transparent border-none outline-none px-6 text-white text-sm font-medium" 
-                  />
-                  <button type="submit" disabled={isLoading || !input?.trim()} className="w-14 h-14 bg-[#6C63FF] rounded-3xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl disabled:opacity-50">
-                    <Send size={24} className="text-white" />
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+      {/* 2. HERO SECTION */}
+      <section className="relative pt-40 pb-20 px-6 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-[#6C63FF] blur-[150px] opacity-10 rounded-full"></div>
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8 animate-bounce">
+            <Sparkles size={14} className="text-amber-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">v1.2 Production Engine Live</span>
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter text-white leading-[0.9] mb-8 uppercase">
+            Execute Faster.<br/>
+            <span className="text-[#6C63FF]">Build Smarter.</span>
+          </h1>
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 font-medium mb-12 leading-relaxed">
+            The elite AI Execution Engine for YashNav IT Solutions. Nexora architect's your code, engineers your designs, and deploys your future in seconds.
+          </p>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+            <Link href="/login" className="w-full md:w-auto px-10 py-5 bg-[#6C63FF] text-white rounded-[2rem] font-black italic text-lg shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3">
+              GET STARTED <ArrowRight size={20} />
+            </Link>
+            <button className="w-full md:w-auto px-10 py-5 bg-white/5 border border-white/10 text-white rounded-[2rem] font-black italic text-lg hover:bg-white/10 transition-all">
+              VIEW DOCUMENTATION
+            </button>
+          </div>
         </div>
-      </main>
+      </section>
 
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6C63FF; }
-      `}</style>
+      {/* 3. CAPABILITIES GRID */}
+      <section id="features" className="py-24 px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-[#6C63FF] text-center text-[10px] font-black uppercase tracking-[0.5em] mb-16">Core Intelligence Modules</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <FeatureCard 
+              icon={<Code />} 
+              title="Autonomous Coding" 
+              desc="Full-stack React, Node, and Python execution with zero syntax errors." 
+            />
+            <FeatureCard 
+              icon={<Paintbrush />} 
+              title="UX/UI Design" 
+              desc="Generates modern wireframes, Tailwind palettes, and brand identities." 
+            />
+            <FeatureCard 
+              icon={<Globe />} 
+              title="SEO Strategy" 
+              desc="Deep keyword analysis, meta-automation, and visibility planning." 
+            />
+            <FeatureCard 
+              icon={<Rocket />} 
+              title="Auto-Deploy" 
+              desc="One-click deployment strategies for Vercel, AWS, and Cloud nodes." 
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. YASHNAV ECOSYSTEM */}
+      <section id="solutions" className="py-24 px-6 bg-white/[0.02] border-y border-white/5">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+          <div className="flex-1 text-left">
+            <h3 className="text-4xl font-black italic tracking-tighter text-white uppercase mb-6 leading-tight">
+              Optimized for the <br/> <span className="text-[#6C63FF]">YashNav Ecosystem.</span>
+            </h3>
+            <p className="text-slate-400 text-lg mb-8">
+              Nexora is fine-tuned to handle YashNav IT Solutions' specific business branches including DSR EV Mobility, Load Maker, and Sri Sai Copier.
+            </p>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-3 text-sm font-bold"><Zap size={18} className="text-[#6C63FF]"/> Logistics Optimization for DSR EV</li>
+              <li className="flex items-center gap-3 text-sm font-bold"><BarChart3 size={18} className="text-[#6C63FF]"/> Revenue Analytics for IT Services</li>
+              <li className="flex items-center gap-3 text-sm font-bold"><ShieldCheck size={18} className="text-[#6C63FF]"/> Enterprise-Grade Security Protocol</li>
+            </ul>
+          </div>
+          <div className="flex-1 w-full aspect-video bg-gradient-to-br from-[#6C63FF]/20 to-cyan-500/20 rounded-[3rem] border border-white/10 relative group overflow-hidden">
+             <div className="absolute inset-0 flex items-center justify-center">
+                <div className="p-8 bg-[#0D0D14] rounded-3xl border border-white/10 shadow-2xl group-hover:scale-110 transition-transform">
+                   <Cpu size={60} className="text-[#6C63FF] animate-pulse" />
+                </div>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. FOOTER */}
+      <footer className="py-20 px-6 border-t border-white/5 text-center">
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <Cpu className="text-[#6C63FF]" size={24} />
+          <span className="text-sm font-black italic tracking-tighter text-white">NEXORA AI</span>
+        </div>
+        <p className="text-[10px] font-black text-slate-700 tracking-[0.5em] uppercase italic">
+          Think Faster • Build Smarter • Nexora AI © 2026
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, desc }: any) {
+  return (
+    <div className="p-10 bg-[#0A0A0F] border border-white/5 rounded-[2.5rem] hover:border-[#6C63FF]/30 transition-all group">
+      <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-[#6C63FF] mb-8 group-hover:bg-[#6C63FF] group-hover:text-white transition-all shadow-xl">
+        {icon}
+      </div>
+      <h4 className="text-xl font-black italic text-white uppercase mb-4 tracking-tighter">{title}</h4>
+      <p className="text-slate-500 text-sm font-medium leading-relaxed">{desc}</p>
     </div>
   );
 }
