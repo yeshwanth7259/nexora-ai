@@ -8,8 +8,9 @@ export async function POST(req: Request) {
 
   const result = await streamText({
     model: google('gemini-1.5-pro'),
-    messages: messages, // Passing directly fixes the "convertToCoreMessages" error
-    system: `You are NEXORA AI, Lead Architect for YashNav IT Solutions. Use the master manual for all coding and SEO tasks.`,
+    messages, // Direct passing is safer for Vercel builds
+    system: `You are NEXORA AI, Lead Architect for YashNav IT Solutions. 
+    Execute all coding, design, and SEO tasks with precision.`,
   });
 
   return result.toDataStreamResponse();
