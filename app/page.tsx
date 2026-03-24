@@ -8,43 +8,63 @@ import { Send, Cpu, MessageSquare, LogOut } from "lucide-react";
 
 export default function NexoraApp() {
   const [session, setSession] = useState<any>(null);
-  
-  // FIXED: Updated destructured properties to match latest AI SDK types
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({ 
-    api: '/api/chat' 
-  });
-
+  const [isClient, setIsClient] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // 1. Fixed Destructuring for 2026 AI SDK Standards
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({ 
+    api: '/api/chat',
+    onResponse: () => {
+      // Optional: Sound effect or haptic trigger on start of stream
+    },
+    onFinish: () => {
+      // Optional: Auto-save chat summary to Supabase
+    }
+  });
+
+  // 2. Hydration Fix: Ensures the component only renders logic on the browser
   useEffect(() => {
+    setIsClient(true);
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
     return () => subscription.unsubscribe();
   }, []);
 
-  // Auto-scroll to latest intelligence output
+  // 3. Smooth Auto-Scroll Logic
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
+  if (!isClient) return <div className="min-h-screen bg-[#030305]" />;
   if (!session) return <LandingPage />;
 
   return (
     <div className="flex h-screen w-full bg-[#030305] text-slate-200 font-sans overflow-hidden">
+      
       {/* Side Console */}
-      <aside className="w-64 bg-[#0A0A0F] border-r border-white/5 p-6 hidden lg:flex flex-col">
+      <aside className="w-64 bg-[#0A0A0F] border-r border-white/5 p-6 hidden lg:flex flex-col shadow-2xl">
         <div className="flex items-center gap-3 mb-10">
-          <Cpu className="text-[#6C63FF]" />
+          <div className="p-2 bg-[#6C63FF]/10 rounded-lg border border-[#6C63FF]/20">
+            <Cpu className="text-[#6C63FF]" size={20} />
+          </div>
           <h1 className="text-sm font-black italic uppercase tracking-tighter text-white">Nexora AI</h1>
         </div>
+        
         <nav className="flex-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-           <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg text-white border border-white/5 italic">
-             <MessageSquare size={14}/> Intelligence Node
+           <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl text-white border border-white/5 italic shadow-inner">
+             <MessageSquare size={14} className="text-[#6C63FF]"/> Intelligence Node
            </div>
         </nav>
-        <button onClick={() => supabase.auth.signOut()} className="text-[10px] font-bold uppercase text-slate-600 hover:text-red-400 flex items-center gap-3 transition-colors">
+
+        <button 
+          onClick={() => supabase.auth.signOut()} 
+          className="text-[10px] font-black uppercase text-slate-600 hover:text-red-400 flex items-center gap-3 transition-all hover:translate-x-1"
+        >
           <LogOut size={14}/> Deactivate Session
         </button>
       </aside>
@@ -52,54 +72,80 @@ export default function NexoraApp() {
       {/* Main Execution Workspace */}
       <main className="flex-1 flex flex-col relative bg-[#030305]">
         <header className="h-16 border-b border-white/5 flex items-center px-8 justify-between bg-[#030305]/50 backdrop-blur-xl z-10">
-           <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
-             <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></div>
-             Authenticated: {session.user.email}
+           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest italic flex items-center gap-2">
+             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+             Authenticated // {session.user.email}
            </span>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth" ref={scrollRef}>
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth custom-scrollbar" ref={scrollRef}>
           {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center opacity-10">
-              <Cpu size={48} className="mb-4" />
-              <h2 className="text-xs font-black uppercase tracking-[1em]">Execution Engine Ready</h2>
+            <div className="h-full flex flex-col items-center justify-center opacity-20 group">
+              <Cpu size={64} className="mb-4 text-[#6C63FF] group-hover:scale-110 transition-transform duration-500" />
+              <h2 className="text-[10px] font-black uppercase tracking-[1.5em] text-center ml-[1.5em]">Execution Engine Active</h2>
             </div>
           )}
           
           {messages.map((m, i) => (
-            <div key={i} className={`max-w-3xl mx-auto p-8 rounded-[2rem] animate-in fade-in slide-in-from-bottom-2 duration-500 ${m.role === 'assistant' ? 'bg-white/[0.02] border border-white/5 shadow-2xl' : ''}`}>
-              <div className="text-[9px] font-black uppercase mb-4 opacity-30 tracking-widest italic">{m.role === 'assistant' ? 'Nexora Intelligence' : 'User Query'}</div>
-              <div className="prose prose-invert text-sm leading-relaxed text-slate-300">
+            <div 
+              key={i} 
+              className={`max-w-3xl mx-auto p-8 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-4 duration-700 ${
+                m.role === 'assistant' 
+                ? 'bg-white/[0.02] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' 
+                : 'bg-transparent border border-transparent'
+              }`}
+            >
+              <div className="text-[9px] font-black uppercase mb-4 opacity-30 tracking-[0.3em] italic">
+                {m.role === 'assistant' ? 'Nexora Intelligence' : 'Source Query'}
+              </div>
+              <div className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed selection:bg-[#6C63FF]/30">
                 <ReactMarkdown>{m.content}</ReactMarkdown>
               </div>
             </div>
           ))}
+
           {isLoading && (
-            <div className="max-w-3xl mx-auto p-6 text-[10px] italic text-[#6C63FF] animate-pulse">
-              Nexora is processing...
+            <div className="max-w-3xl mx-auto px-8 py-2 flex items-center gap-3">
+              <div className="flex gap-1">
+                <div className="w-1 h-1 bg-[#6C63FF] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                <div className="w-1 h-1 bg-[#6C63FF] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                <div className="w-1 h-1 bg-[#6C63FF] rounded-full animate-bounce"></div>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#6C63FF]/50 italic">Processing Node</span>
             </div>
           )}
         </div>
 
-        {/* Command Input */}
-        <form onSubmit={handleSubmit} className="p-8 max-w-3xl mx-auto w-full">
-          <div className="bg-[#0D0D14] border border-white/10 rounded-3xl p-2 flex items-center shadow-2xl focus-within:border-[#6C63FF]/50 transition-all group">
+        {/* Command Input Area */}
+        <div className="p-8 max-w-3xl mx-auto w-full bg-gradient-to-t from-[#030305] via-[#030305] to-transparent">
+          <form 
+            onSubmit={handleSubmit} 
+            className="bg-[#0D0D14] border border-white/10 rounded-[2rem] p-2 flex items-center shadow-2xl focus-within:border-[#6C63FF]/50 focus-within:ring-1 focus-within:ring-[#6C63FF]/20 transition-all group"
+          >
             <input 
               value={input} 
               onChange={handleInputChange} 
-              placeholder="Enter instruction for Nexora..." 
-              className="flex-1 bg-transparent border-none outline-none px-6 text-sm text-white placeholder:text-slate-700" 
+              placeholder="Execute intelligence command..." 
+              className="flex-1 bg-transparent border-none outline-none px-6 text-sm text-white placeholder:text-slate-700 placeholder:italic" 
             />
             <button 
               type="submit" 
               disabled={isLoading || !input.trim()} 
-              className="w-12 h-12 bg-[#6C63FF] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#6C63FF]/20 disabled:opacity-30"
+              className="w-12 h-12 bg-[#6C63FF] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#6C63FF]/20 disabled:opacity-20 disabled:grayscale cursor-pointer"
             >
               <Send size={18} className="text-white"/>
             </button>
-          </div>
-        </form>
+          </form>
+          <p className="text-[8px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">Powered by YashNav Execution Engine</p>
+        </div>
       </main>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a24; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6C63FF; }
+      `}</style>
     </div>
   );
 }

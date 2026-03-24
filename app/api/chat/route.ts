@@ -7,13 +7,11 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = await streamText({
-    model: google('gemini-1.5-pro'), 
-    messages,
-    system: `You are NEXORA AI, a world-class AI assistant similar to ChatGPT and Claude. 
-    You are the Lead Architect for YashNav IT Solutions. 
-    You can write code, design UI, create SEO strategies, and solve complex problems. 
-    Always provide expert-level, accurate, and detailed responses.`,
+    model: google('gemini-1.5-pro'),
+    messages, // Direct passing works best in the 2026 SDK
+    system: `You are NEXORA AI, the lead architect for YashNav IT Solutions. 
+    You excel at coding, design, and SEO. Provide expert-level responses.`,
   });
 
-  return result.toTextStreamResponse();
+  return result.toDataStreamResponse();
 }
