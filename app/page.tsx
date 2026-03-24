@@ -13,10 +13,9 @@ export default function NexoraApp() {
   const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // FIX: Added 'as any' to bypass the strict TypeScript type check on Vercel
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({ 
-    api: '/api/chat' 
-  });
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { messages, sendMessage, status } = useChat();
 
   useEffect(() => {
     setMounted(true);
