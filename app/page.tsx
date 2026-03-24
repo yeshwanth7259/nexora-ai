@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { useChat } from '@ai-sdk/react';
+import { useChat } from 'ai/react';
 import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LandingPage from './landing/page'; 
-import { Send, Plus, MessageSquare, Cpu, Menu, ShieldCheck, LogOut } from "lucide-react";
+import { Send, MessageSquare, Cpu, ShieldCheck, LogOut } from "lucide-react";
 
 export default function NexoraApp() {
   const [session, setSession] = useState<any>(null);
@@ -19,7 +19,7 @@ export default function NexoraApp() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({ api: '/api/chat' });
+  const { messages, input, setInput, handleSubmit, isLoading } = useChat({ api: '/api/chat' });
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -28,7 +28,7 @@ export default function NexoraApp() {
   if (!session) return <LandingPage />;
 
   return (
-    <div className="flex h-screen w-full bg-[#030305] text-slate-200 overflow-hidden">
+    <div className="flex h-screen w-full bg-[#030305] text-slate-200 overflow-hidden font-sans">
       <aside className="w-72 bg-[#0A0A0F] border-r border-white/5 flex flex-col p-6">
         <div className="flex items-center gap-3 mb-10"><Cpu className="text-[#6C63FF]" size={24} /><h1 className="text-xl font-black italic tracking-tighter text-white">NEXORA AI</h1></div>
         <nav className="flex-1 space-y-2">
@@ -37,26 +37,27 @@ export default function NexoraApp() {
         </nav>
         <button onClick={() => supabase.auth.signOut()} className="mt-auto flex items-center gap-3 text-slate-600 hover:text-red-400 text-[10px] font-bold uppercase"><LogOut size={16} /> Sign Out</button>
       </aside>
-
       <main className="flex-1 flex flex-col bg-[#030305]">
         <header className="h-20 border-b border-white/5 flex items-center px-8 text-[9px] font-bold text-slate-500 uppercase tracking-widest">Node Active // {session.user.email}</header>
-        <div className="flex-1 overflow-y-auto p-6 lg:p-12" ref={scrollRef}>
+        <div className="flex-1 overflow-y-auto p-12" ref={scrollRef}>
           <div className="max-w-4xl mx-auto">
-            {messages.length === 0 ? <div className="py-20 text-center opacity-20 text-xs font-black uppercase tracking-[0.5em]">Nexora Intelligence Engine Active</div> : messages.map((m, i) => (
-              <div key={i} className={`flex gap-6 mb-12 ${m.role === 'assistant' ? 'bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5 shadow-xl' : ''}`}>
-                <div className="prose prose-invert max-w-none text-slate-300 flex-1 text-sm leading-relaxed">
-                  <ReactMarkdown components={{ code({inline, className, children}: any) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (<SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div">{String(children)}</SyntaxHighlighter>) : <code className="bg-slate-800 px-1 rounded text-[#6C63FF]">{children}</code>
-                  }}}>{m.content}</ReactMarkdown>
+            {messages.map((m, i) => (
+              <div key={i} className={`flex gap-6 mb-12 ${m.role === 'assistant' ? 'bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5' : ''}`}>
+                <div className="prose prose-invert max-w-none text-slate-300 flex-1 text-sm leading-relaxed font-medium">
+                  <ReactMarkdown components={{
+                    code: ({inline, className, children}: any) => {
+                      const match = /language-(\w+)/.exec(className || '');
+                      return !inline && match ? (<SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div">{String(children)}</SyntaxHighlighter>) : <code className="bg-slate-800 px-1 rounded text-[#6C63FF]">{children}</code>
+                    }
+                  }}>{m.content as string}</ReactMarkdown>
                 </div>
               </div>
             ))}
           </div>
         </div>
         <form onSubmit={handleSubmit} className="p-10 max-w-4xl mx-auto w-full">
-          <div className="relative flex items-center bg-[#0D0D14] border border-white/10 p-2.5 rounded-[2.5rem] shadow-2xl">
-            <input value={input} onChange={handleInputChange} placeholder="Command Nexora..." className="flex-1 bg-transparent border-none outline-none px-6 text-white text-sm" />
+          <div className="relative flex items-center bg-[#0D0D14] border border-white/10 p-2 rounded-[2.5rem] shadow-2xl focus-within:border-[#6C63FF]/50 transition-all">
+            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Command Nexora..." className="flex-1 bg-transparent border-none outline-none px-6 text-white text-sm" />
             <button type="submit" disabled={isLoading} className="w-14 h-14 bg-[#6C63FF] rounded-3xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all"><Send size={24} className="text-white" /></button>
           </div>
         </form>

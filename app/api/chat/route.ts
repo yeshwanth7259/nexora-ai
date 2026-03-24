@@ -15,5 +15,5 @@ export async function POST(req: Request) {
     Always provide expert-level, accurate, and detailed responses.`,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
