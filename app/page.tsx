@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
 import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -19,7 +19,7 @@ export default function NexoraApp() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const { messages, input, setInput, handleSubmit, isLoading } = useChat({ api: '/api/chat' });
+  const { messages, input, setInput, handleSubmit, isLoading } = useChat();
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -41,7 +41,7 @@ export default function NexoraApp() {
         <header className="h-20 border-b border-white/5 flex items-center px-8 text-[9px] font-bold text-slate-500 uppercase tracking-widest">Node Active // {session.user.email}</header>
         <div className="flex-1 overflow-y-auto p-12" ref={scrollRef}>
           <div className="max-w-4xl mx-auto">
-            {messages.map((m, i) => (
+            {messages.map((m: any, i: number) => (
               <div key={i} className={`flex gap-6 mb-12 ${m.role === 'assistant' ? 'bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5' : ''}`}>
                 <div className="prose prose-invert max-w-none text-slate-300 flex-1 text-sm leading-relaxed font-medium">
                   <ReactMarkdown components={{
