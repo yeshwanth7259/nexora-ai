@@ -3,50 +3,55 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { supabase } from '@/lib/supabase';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LandingPage from './landing/page'; 
-import { Send, Cpu, MessageSquare, LogOut } from "lucide-react";
+import { Send, Cpu, MessageSquare, LogOut, Loader2 } from "lucide-react";
 
 export default function NexoraApp() {
   const [session, setSession] = useState<any>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Fixed Destructuring for 2026 AI SDK Standards
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({ 
-    api: '/api/chat',
-    onResponse: () => {
-      // Optional: Sound effect or haptic trigger on start of stream
-    },
-    onFinish: () => {
-      // Optional: Auto-save chat summary to Supabase
-    }
-  });
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { messages, sendMessage, status } = useChat();
 
-  // 2. Hydration Fix: Ensures the component only renders logic on the browser
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
-  // 3. Smooth Auto-Scroll Logic
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  }, [messages, isLoading]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
 
-  if (!isClient) return <div className="min-h-screen bg-[#030305]" />;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      await sendMessage({ role: 'user', content: input });
+      setInput('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!mounted) return <div className="min-h-screen bg-[#030305]" />;
   if (!session) return <LandingPage />;
 
   return (
     <div className="flex h-screen w-full bg-[#030305] text-slate-200 font-sans overflow-hidden">
       
-      {/* Side Console */}
+      {/* Sidebar Navigation */}
       <aside className="w-64 bg-[#0A0A0F] border-r border-white/5 p-6 hidden lg:flex flex-col shadow-2xl">
         <div className="flex items-center gap-3 mb-10">
           <div className="p-2 bg-[#6C63FF]/10 rounded-lg border border-[#6C63FF]/20">
@@ -56,14 +61,14 @@ export default function NexoraApp() {
         </div>
         
         <nav className="flex-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-           <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl text-white border border-white/5 italic shadow-inner">
+           <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl text-white border border-white/5 italic">
              <MessageSquare size={14} className="text-[#6C63FF]"/> Intelligence Node
            </div>
         </nav>
 
         <button 
           onClick={() => supabase.auth.signOut()} 
-          className="text-[10px] font-black uppercase text-slate-600 hover:text-red-400 flex items-center gap-3 transition-all hover:translate-x-1"
+          className="text-[10px] font-black uppercase text-slate-600 hover:text-red-400 flex items-center gap-3 transition-all"
         >
           <LogOut size={14}/> Deactivate Session
         </button>
@@ -78,65 +83,84 @@ export default function NexoraApp() {
            </span>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth custom-scrollbar" ref={scrollRef}>
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar" ref={scrollRef}>
           {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center opacity-20 group">
-              <Cpu size={64} className="mb-4 text-[#6C63FF] group-hover:scale-110 transition-transform duration-500" />
-              <h2 className="text-[10px] font-black uppercase tracking-[1.5em] text-center ml-[1.5em]">Execution Engine Active</h2>
+            <div className="h-full flex flex-col items-center justify-center opacity-20">
+              <Cpu size={64} className="mb-4 text-[#6C63FF]" />
+              <h2 className="text-[10px] font-black uppercase tracking-[1.5em] text-center ml-[1.5em]">Execution Engine Ready</h2>
             </div>
           )}
           
-          {messages.map((m, i) => (
+          {messages.map((m: any, i: number) => (
             <div 
               key={i} 
-              className={`max-w-3xl mx-auto p-8 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-4 duration-700 ${
+              className={`max-w-3xl mx-auto p-8 rounded-[2.5rem] ${
                 m.role === 'assistant' 
-                ? 'bg-white/[0.02] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' 
-                : 'bg-transparent border border-transparent'
+                ? 'bg-white/[0.02] border border-white/5 shadow-2xl' 
+                : 'bg-transparent'
               }`}
             >
               <div className="text-[9px] font-black uppercase mb-4 opacity-30 tracking-[0.3em] italic">
                 {m.role === 'assistant' ? 'Nexora Intelligence' : 'Source Query'}
               </div>
-              <div className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed selection:bg-[#6C63FF]/30">
-                <ReactMarkdown>{m.content}</ReactMarkdown>
+              
+              <div className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed">
+                <ReactMarkdown
+                  components={{
+                    code({ inline, className, children, ...props }: any) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={vscDarkPlus as any}
+                          language={match[1]}
+                          PreTag="div"
+                          className="rounded-xl border border-white/5 my-4"
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code className="bg-slate-800 px-1.5 py-0.5 rounded text-[#6C63FF] font-mono">
+                          {children}
+                        </code>
+                      );
+                    }
+                  }}
+                >
+                  {m.content as string}
+                </ReactMarkdown>
               </div>
             </div>
           ))}
 
           {isLoading && (
             <div className="max-w-3xl mx-auto px-8 py-2 flex items-center gap-3">
-              <div className="flex gap-1">
-                <div className="w-1 h-1 bg-[#6C63FF] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-1 h-1 bg-[#6C63FF] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-1 h-1 bg-[#6C63FF] rounded-full animate-bounce"></div>
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-[#6C63FF]/50 italic">Processing Node</span>
+              <Loader2 className="w-3 h-3 text-[#6C63FF] animate-spin" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#6C63FF]/50 italic">Processing Node...</span>
             </div>
           )}
         </div>
 
-        {/* Command Input Area */}
-        <div className="p-8 max-w-3xl mx-auto w-full bg-gradient-to-t from-[#030305] via-[#030305] to-transparent">
+        {/* Command Input Field */}
+        <div className="p-8 max-w-3xl mx-auto w-full">
           <form 
             onSubmit={handleSubmit} 
-            className="bg-[#0D0D14] border border-white/10 rounded-[2rem] p-2 flex items-center shadow-2xl focus-within:border-[#6C63FF]/50 focus-within:ring-1 focus-within:ring-[#6C63FF]/20 transition-all group"
+            className="bg-[#0D0D14] border border-white/10 rounded-[2rem] p-2 flex items-center shadow-2xl focus-within:border-[#6C63FF]/50 transition-all"
           >
             <input 
               value={input} 
               onChange={handleInputChange} 
               placeholder="Execute intelligence command..." 
-              className="flex-1 bg-transparent border-none outline-none px-6 text-sm text-white placeholder:text-slate-700 placeholder:italic" 
+              className="flex-1 bg-transparent border-none outline-none px-6 text-sm text-white placeholder:text-slate-700" 
             />
             <button 
               type="submit" 
               disabled={isLoading || !input.trim()} 
-              className="w-12 h-12 bg-[#6C63FF] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#6C63FF]/20 disabled:opacity-20 disabled:grayscale cursor-pointer"
+              className="w-12 h-12 bg-[#6C63FF] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl shadow-[#6C63FF]/20 disabled:opacity-20"
             >
               <Send size={18} className="text-white"/>
             </button>
           </form>
-          <p className="text-[8px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">Powered by YashNav Execution Engine</p>
+          <p className="text-[8px] text-center mt-4 text-slate-700 font-black uppercase tracking-[0.4em]">Powered by YashNav IT Solutions</p>
         </div>
       </main>
 

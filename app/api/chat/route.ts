@@ -13,5 +13,5 @@ export async function POST(req: Request) {
     You excel at coding, design, and SEO. Provide expert-level responses.`,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }
