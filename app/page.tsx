@@ -11,10 +11,9 @@ export default function NexoraApp() {
   const [mounted, setMounted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // FIX: Added 'as any' to bypass the strict TypeScript type check on Vercel
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({ 
     api: '/api/chat' 
-  }) as any;
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -71,8 +70,8 @@ export default function NexoraApp() {
               <h2 className="text-[10px] font-black uppercase tracking-[1.5em] text-center ml-[1.5em]">Engine Ready</h2>
             </div>
           )}
-          {messages.map((m: any, i: number) => (
-            <div key={i} className={`max-w-3xl mx-auto p-8 rounded-[2.5rem] ${m.role === 'assistant' ? 'bg-white/[0.02] border border-white/5 shadow-2xl' : ''}`}>
+          {messages.map((m, i) => (
+            <div key={i} className={`max-w-3xl mx-auto p-8 rounded-[2.5rem] ${m.role === 'assistant' ? 'bg-white/[0.02] border border-white/5 shadow-2xl' : ''}`}> 
               <div className="text-[9px] font-black uppercase mb-4 opacity-30 tracking-[0.3em] italic">{m.role === 'assistant' ? 'Nexora' : 'User'}</div>
               <div className="prose prose-invert prose-sm max-w-none text-slate-300 leading-relaxed">
                 <ReactMarkdown>{m.content}</ReactMarkdown>
@@ -90,7 +89,7 @@ export default function NexoraApp() {
         <div className="p-8 max-w-3xl mx-auto w-full">
           <form onSubmit={handleSubmit} className="bg-[#0D0D14] border border-white/10 rounded-[2rem] p-2 flex items-center shadow-2xl focus-within:border-[#6C63FF]/50 transition-all">
             <input value={input} onChange={handleInputChange} placeholder="Execute command..." className="flex-1 bg-transparent border-none outline-none px-6 text-sm text-white" />
-            <button type="submit" disabled={isLoading || !input.trim()} className="w-12 h-12 bg-[#6C63FF] rounded-2xl flex items-center justify-center hover:scale-105 transition-all shadow-xl disabled:opacity-20">
+            <button type="submit" disabled={isLoading || !input.trim()} className="w-12 h-12 bg-[#6C63FF] rounded-2xl flex items-center justify-center hover:scale-105 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
               <Send size={18} className="text-white"/>
             </button>
           </form>
