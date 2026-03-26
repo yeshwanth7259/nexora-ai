@@ -5,16 +5,11 @@ const nextConfig: NextConfig = {
   
   typescript: {
     // This allows production builds to successfully complete even if
-    // your project has TypeScript errors (like the 'input' property mismatch).
+    // your project has TypeScript errors (like the AI SDK mismatch).
     ignoreBuildErrors: true,
   },
-  
-  eslint: {
-    // This allows the build to finish even if there are linting warnings.
-    ignoreDuringBuilds: true,
-  },
 
-  // Optional: If you use images from external sources like Supabase or Google
+  // Allows Nexora to display user avatars from Google or Supabase
   images: {
     remotePatterns: [
       {
